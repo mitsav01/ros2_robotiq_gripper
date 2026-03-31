@@ -23,6 +23,7 @@
 4. [URDF / ros2_control Configuration](#4-urdf--ros2_control-configuration)
 5. [Testing Guidance](#5-testing-guidance)
 6. [Change Summary Table](#6-change-summary-table)
+7. [Documentation Ecosystem (Ontology & Agent)](#7-documentation-ecosystem-ontology--agent)
 
 ---
 
@@ -61,7 +62,7 @@ The four layers from bottom to top:
 | Layer | Field (Current) | Field (Object Detection) |
 |---|---|---|
 | Modbus register | Byte 5 of response payload (`uint8` 0–255) | Bits 6 & 7 of byte 0 (`uint8`) |
-| `default_driver.cpp` | `gripper_current_` (`uint8`) | `object_detection_status_` (`uint8`) |
+| `default_driver.cpp` | `gripper_current_` (`uint8_t`) | `object_detection_status_` (`ObjectDetectionStatus`) |
 | `hardware_interface.hpp` | `gripper_current_raw_` (`atomic<uint8>`) | `object_detection_status_raw_` (`atomic<uint8>`) |
 | `hardware_interface.hpp` | `gripper_current_` (`double`) | `object_detection_state_` (`double`) |
 | Exported interface name | `HW_IF_EFFORT` | `"object_detection_status"` |
@@ -133,7 +134,7 @@ Without these declarations the fake driver would be an abstract class and could 
 
 ##### New state containers
 
-Four new member variables were added to ferry data safely across the thread boundary between the asynchronous serial polling loop and the real-time ROS control cycle:
+Five new member variables were added to ferry data safely across the thread boundary between the asynchronous serial polling loop and the real-time ROS control cycle:
 
 | Variable | Type | Purpose |
 |---|---|---|
@@ -299,3 +300,18 @@ With a physical gripper connected:
 | `default_driver.cpp` | Parsing | `kCurrentIndex=5`, `update_status()` extended |
 | `fake_driver.cpp` | Simulation | Stub implementations returning `0` |
 | `hardware_interface.cpp` | Integration | Export interfaces, scale effort, velocity, atomic store, write suppression |
+
+---
+
+## 7. Documentation Ecosystem (Ontology & Agent)
+
+As part of the package extension, a formal semantic web ontology and an AI-powered natural language querying agent were introduced to explicitly map the architectural relationships of the driver.
+
+- **`documentation/robotiq_driver_ontology.owl`**: An OWL ontology that formally describes the entire `robotiq_driver` C++ architecture. It maps the Modbus register payload, thread boundaries, ROS 2 hardware interfaces, and dependency-injection factories.
+- **`documentation/agent.py`**: A Python CLI tool that parses the ontology graph and uses the OpenAI API to translate natural language questions into executable SPARQL.
+    Sample questions:
+    - "What are the packages in this project and what is their purpose?"
+    - "What are the four possible Object Detection Status values, and what integer detection code corresponds to a "Stall" or "No Object" state?"
+
+
+To use the exploration agent, navigate to the `documentation` folder, configure your API key in the `.env` file, install dependencies via `pip install -r requirements.txt`, and run `python3 agent.py`.

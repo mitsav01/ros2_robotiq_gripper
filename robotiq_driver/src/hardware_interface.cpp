@@ -91,8 +91,6 @@ hardware_interface::CallbackReturn RobotiqGripperHardwareInterface::on_init(cons
                            kGripperMaxforce;
   gripper_position_ = std::numeric_limits<double>::quiet_NaN();
   gripper_velocity_ = std::numeric_limits<double>::quiet_NaN();
-  gripper_position_ = std::numeric_limits<double>::quiet_NaN();
-  gripper_velocity_ = std::numeric_limits<double>::quiet_NaN();
   gripper_current_ = std::numeric_limits<double>::quiet_NaN();
   gripper_position_command_ = std::numeric_limits<double>::quiet_NaN();
   reactivate_gripper_cmd_ = NO_NEW_CMD_;
