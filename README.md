@@ -4,7 +4,7 @@
 
 ---
 
-![System architecture overview diagram](.documentation/architecture.jpg)
+![System architecture overview diagram](documentation/architecture.jpg)
 
 ---
 
@@ -41,7 +41,7 @@ This document describes a focused extension that surfaces two new pieces of grip
 
 In addition to the new state channels, a **serial-traffic optimization** was introduced: Modbus write commands are now suppressed when the target speed, force, and position values have not changed since the previous cycle. This reduces unnecessary bus contention and leaves more bandwidth for the status polling that the new state fields depend on.
 
-![Before/after diagram: Modbus traffic reduction — duplicate write suppression](.documentation/optimization.jpg)
+![Before/after diagram: Modbus traffic reduction — duplicate write suppression](documentation/optimization.jpg)
 
 ---
 
@@ -90,7 +90,7 @@ Declaring both methods as pure virtual ensures that every implementation — rea
 
 > **Design note:** Returning `uint8_t` (0–255) keeps the getter at the raw hardware representation. Unit conversion and scaling is deliberately deferred to the `hardware_interface` layer, which owns the physical meaning of those bytes.
 
-![Class hierarchy UML: Driver (abstract) → DefaultDriver, FakeDriver](.documentation/read_registers.jpg)
+![Class hierarchy UML: Driver (abstract) → DefaultDriver, FakeDriver](documentation/read_registers.jpg)
 
 ---
 
@@ -174,7 +174,7 @@ The Robotiq gripper responds to a status query with an 8-byte frame. The byte la
 - `get_gripper_current()` returns the cached `gripper_current_` value.
 - `get_object_detection_status()` returns the cached `object_detection_status_` value.
 
-![Sequence diagram: Modbus poll cycle → update_status() → atomic write → read() → scaled value](.documentation/response_packet.jpg)
+![Sequence diagram: Modbus poll cycle → update_status() → atomic write → read() → scaled value](documentation/response_packet.jpg)
 
 ---
 
