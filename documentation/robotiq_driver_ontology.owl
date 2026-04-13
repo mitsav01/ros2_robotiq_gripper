@@ -1,0 +1,1299 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/robotiq_driver/ontology#"
+     xml:base="http://www.semanticweb.org/robotiq_driver/ontology"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:robotiq="http://www.semanticweb.org/robotiq_driver/ontology#">
+
+    <!-- ============================================================ -->
+    <!-- Ontology Declaration                                         -->
+    <!-- ============================================================ -->
+
+    <owl:Ontology rdf:about="http://www.semanticweb.org/robotiq_driver/ontology">
+        <rdfs:label>Robotiq 2F Gripper ROS 2 Driver Ontology</rdfs:label>
+        <rdfs:comment>
+            Ontology representing the full architecture, data flow, threading model,
+            Modbus communication protocol, ROS 2 control integration, and source file
+            structure of the Robotiq 2F gripper driver package. Captures both the
+            original design and the extended state feedback modifications (effort /
+            object detection status) introduced in the Acrambly revision.
+        </rdfs:comment>
+        <owl:versionInfo>2.0</owl:versionInfo>
+    </owl:Ontology>
+
+
+    <!-- ============================================================ -->
+    <!-- OBJECT PROPERTIES                                            -->
+    <!-- ============================================================ -->
+
+    <!-- Structural / Compositional -->
+
+    <owl:ObjectProperty rdf:about="#implements">
+        <rdfs:label>implements</rdfs:label>
+        <rdfs:comment>A concrete class implements an abstract interface or base class.</rdfs:comment>
+        <rdfs:domain rdf:resource="#SoftwareComponent"/>
+        <rdfs:range rdf:resource="#AbstractInterface"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#extends">
+        <rdfs:label>extends</rdfs:label>
+        <rdfs:comment>A class inherits from and extends another class.</rdfs:comment>
+        <rdfs:domain rdf:resource="#SoftwareComponent"/>
+        <rdfs:range rdf:resource="#SoftwareComponent"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#declared_in">
+        <rdfs:label>declared in</rdfs:label>
+        <rdfs:comment>A method or variable is declared in a source file.</rdfs:comment>
+        <rdfs:domain rdf:resource="#CodeElement"/>
+        <rdfs:range rdf:resource="#SourceFile"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#implemented_in">
+        <rdfs:label>implemented in</rdfs:label>
+        <rdfs:comment>A method body is defined in a source file.</rdfs:comment>
+        <rdfs:domain rdf:resource="#Method"/>
+        <rdfs:range rdf:resource="#SourceFile"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#has_method">
+        <rdfs:label>has method</rdfs:label>
+        <rdfs:domain rdf:resource="#SoftwareComponent"/>
+        <rdfs:range rdf:resource="#Method"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#has_member_variable">
+        <rdfs:label>has member variable</rdfs:label>
+        <rdfs:domain rdf:resource="#SoftwareComponent"/>
+        <rdfs:range rdf:resource="#MemberVariable"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#overrides">
+        <rdfs:label>overrides</rdfs:label>
+        <rdfs:comment>A concrete method overrides a virtual/pure-virtual method in a base class.</rdfs:comment>
+        <rdfs:domain rdf:resource="#Method"/>
+        <rdfs:range rdf:resource="#Method"/>
+    </owl:ObjectProperty>
+
+    <!-- Data Flow -->
+
+    <owl:ObjectProperty rdf:about="#reads_from">
+        <rdfs:label>reads from</rdfs:label>
+        <rdfs:domain rdf:resource="#SoftwareComponent"/>
+        <rdfs:range rdf:resource="#DataNode"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#writes_to">
+        <rdfs:label>writes to</rdfs:label>
+        <rdfs:domain rdf:resource="#SoftwareComponent"/>
+        <rdfs:range rdf:resource="#DataNode"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#scaled_from">
+        <rdfs:label>scaled from</rdfs:label>
+        <rdfs:comment>A derived double variable is computed by scaling a raw register value.</rdfs:comment>
+        <rdfs:domain rdf:resource="#MemberVariable"/>
+        <rdfs:range rdf:resource="#MemberVariable"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#derived_from">
+        <rdfs:label>derived from</rdfs:label>
+        <rdfs:comment>A computed value is derived from one or more source values.</rdfs:comment>
+        <rdfs:domain rdf:resource="#MemberVariable"/>
+        <rdfs:range rdf:resource="#MemberVariable"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#cached_in">
+        <rdfs:label>cached in</rdfs:label>
+        <rdfs:comment>A register value is cached locally in a driver member variable between polling cycles.</rdfs:comment>
+        <rdfs:domain rdf:resource="#ModbusRegister"/>
+        <rdfs:range rdf:resource="#MemberVariable"/>
+    </owl:ObjectProperty>
+
+    <!-- Thread Interaction -->
+
+    <owl:ObjectProperty rdf:about="#executes_on">
+        <rdfs:label>executes on</rdfs:label>
+        <rdfs:domain rdf:resource="#Method"/>
+        <rdfs:range rdf:resource="#Thread"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#component_runs_on">
+        <rdfs:label>component runs on</rdfs:label>
+        <rdfs:domain rdf:resource="#SoftwareComponent"/>
+        <rdfs:range rdf:resource="#Thread"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#synchronises_via">
+        <rdfs:label>synchronises via</rdfs:label>
+        <rdfs:comment>Two threads safely share a variable using this synchronisation mechanism.</rdfs:comment>
+        <rdfs:domain rdf:resource="#DataNode"/>
+        <rdfs:range rdf:resource="#SynchronisationMechanism"/>
+    </owl:ObjectProperty>
+
+    <!-- Communication -->
+
+    <owl:ObjectProperty rdf:about="#polls_via">
+        <rdfs:label>polls via</rdfs:label>
+        <rdfs:domain rdf:resource="#Driver"/>
+        <rdfs:range rdf:resource="#CommunicationProtocol"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#commands_via">
+        <rdfs:label>commands via</rdfs:label>
+        <rdfs:comment>A component sends actuation commands through a protocol.</rdfs:comment>
+        <rdfs:domain rdf:resource="#SoftwareComponent"/>
+        <rdfs:range rdf:resource="#CommunicationProtocol"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#suppressed_by">
+        <rdfs:label>suppressed by</rdfs:label>
+        <rdfs:comment>A Modbus write transaction is suppressed by a deduplication optimisation.</rdfs:comment>
+        <rdfs:domain rdf:resource="#ModbusWriteTransaction"/>
+        <rdfs:range rdf:resource="#Optimisation"/>
+    </owl:ObjectProperty>
+
+    <!-- ROS 2 Control -->
+
+    <owl:ObjectProperty rdf:about="#exports_interface">
+        <rdfs:label>exports interface</rdfs:label>
+        <rdfs:domain rdf:resource="#HardwareInterface"/>
+        <rdfs:range rdf:resource="#ROS2Interface"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#consumes">
+        <rdfs:label>consumes</rdfs:label>
+        <rdfs:domain rdf:resource="#ROS2ControllerManager"/>
+        <rdfs:range rdf:resource="#StateInterface"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#mapped_to_variable">
+        <rdfs:label>mapped to variable</rdfs:label>
+        <rdfs:comment>A ROS 2 state interface is backed by a specific C++ member variable.</rdfs:comment>
+        <rdfs:domain rdf:resource="#StateInterface"/>
+        <rdfs:range rdf:resource="#MemberVariable"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#validated_in">
+        <rdfs:label>validated in</rdfs:label>
+        <rdfs:comment>The URDF joint interface count is validated inside this method.</rdfs:comment>
+        <rdfs:domain rdf:resource="#ROS2Interface"/>
+        <rdfs:range rdf:resource="#Method"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#has_scaling_parameter">
+        <rdfs:label>has scaling parameter</rdfs:label>
+        <rdfs:comment>The effort scaling formula uses this configuration parameter.</rdfs:comment>
+        <rdfs:domain rdf:resource="#MemberVariable"/>
+        <rdfs:range rdf:resource="#ConfigParameter"/>
+    </owl:ObjectProperty>
+
+    <!-- Source / Change Tracking -->
+
+    <owl:ObjectProperty rdf:about="#modified_by_change">
+        <rdfs:label>modified by change</rdfs:label>
+        <rdfs:comment>Links a source file to the documented change set that modified it.</rdfs:comment>
+        <rdfs:domain rdf:resource="#SourceFile"/>
+        <rdfs:range rdf:resource="#ChangeSet"/>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="#introduced_in_change">
+        <rdfs:label>introduced in change</rdfs:label>
+        <rdfs:comment>A code element (method, variable, constant) was introduced by a specific change.</rdfs:comment>
+        <rdfs:domain rdf:resource="#CodeElement"/>
+        <rdfs:range rdf:resource="#ChangeSet"/>
+    </owl:ObjectProperty>
+
+
+    <!-- ============================================================ -->
+    <!-- DATA PROPERTIES                                              -->
+    <!-- ============================================================ -->
+
+    <owl:DatatypeProperty rdf:about="#has_byte_index">
+        <rdfs:label>has byte index</rdfs:label>
+        <rdfs:comment>Zero-based index of this register within the 8-byte Modbus response frame.</rdfs:comment>
+        <rdfs:domain rdf:resource="#ModbusRegister"/>
+        <rdfs:range rdf:resource="xsd:integer"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#has_cpp_type">
+        <rdfs:label>has C++ type</rdfs:label>
+        <rdfs:domain rdf:resource="#CodeElement"/>
+        <rdfs:range rdf:resource="xsd:string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#interface_name">
+        <rdfs:label>interface name</rdfs:label>
+        <rdfs:comment>The string name used to identify a ROS 2 state or command interface.</rdfs:comment>
+        <rdfs:domain rdf:resource="#ROS2Interface"/>
+        <rdfs:range rdf:resource="xsd:string"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#is_pure_virtual">
+        <rdfs:label>is pure virtual</rdfs:label>
+        <rdfs:range rdf:resource="xsd:boolean"/>
+        <rdfs:domain rdf:resource="#Method"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#is_new_in_revision">
+        <rdfs:label>is new in revision</rdfs:label>
+        <rdfs:comment>True if this element was added in extended-feedback revision.</rdfs:comment>
+        <rdfs:range rdf:resource="xsd:boolean"/>
+        <rdfs:domain rdf:resource="#CodeElement"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#returns_raw_value">
+        <rdfs:label>returns raw value</rdfs:label>
+        <rdfs:comment>True if this method returns a raw hardware register byte (0-255) without scaling.</rdfs:comment>
+        <rdfs:range rdf:resource="xsd:boolean"/>
+        <rdfs:domain rdf:resource="#Method"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#scaling_formula">
+        <rdfs:label>scaling formula</rdfs:label>
+        <rdfs:comment>The mathematical expression used to convert a raw register value to a physical quantity.</rdfs:comment>
+        <rdfs:range rdf:resource="xsd:string"/>
+        <rdfs:domain rdf:resource="#MemberVariable"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#file_path">
+        <rdfs:label>file path</rdfs:label>
+        <rdfs:comment>Relative path of this source file within the robotiq_driver package.</rdfs:comment>
+        <rdfs:range rdf:resource="xsd:string"/>
+        <rdfs:domain rdf:resource="#SourceFile"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#file_role">
+        <rdfs:label>file role</rdfs:label>
+        <rdfs:comment>Human-readable description of this file's purpose in the package.</rdfs:comment>
+        <rdfs:range rdf:resource="xsd:string"/>
+        <rdfs:domain rdf:resource="#SourceFile"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#constant_value">
+        <rdfs:label>constant value</rdfs:label>
+        <rdfs:comment>The integer or string literal value of a named constant.</rdfs:comment>
+        <rdfs:range rdf:resource="xsd:string"/>
+        <rdfs:domain rdf:resource="#NamedConstant"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#detection_code">
+        <rdfs:label>detection code</rdfs:label>
+        <rdfs:comment>The integer firmware code for an object detection status value.</rdfs:comment>
+        <rdfs:range rdf:resource="xsd:integer"/>
+        <rdfs:domain rdf:resource="#ObjectDetectionStatusValue"/>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="#accepted_interface_counts">
+        <rdfs:label>accepted interface counts</rdfs:label>
+        <rdfs:comment>Comma-separated list of valid state interface counts accepted by on_init().</rdfs:comment>
+        <rdfs:range rdf:resource="xsd:string"/>
+        <rdfs:domain rdf:resource="#Method"/>
+    </owl:DatatypeProperty>
+
+
+    <!-- ============================================================ -->
+    <!-- CLASSES                                                      -->
+    <!-- ============================================================ -->
+
+    <!-- ── Top-level categories ─────────────────────────────────── -->
+
+    <owl:Class rdf:about="#HardwareDevice">
+        <rdfs:label>Hardware Device</rdfs:label>
+        <rdfs:comment>A physical electromechanical device in the robot workcell.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#SoftwareComponent">
+        <rdfs:label>Software Component</rdfs:label>
+        <rdfs:comment>Any C++ class or ROS 2 node that participates in the driver architecture.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#AbstractInterface">
+        <rdfs:label>Abstract Interface</rdfs:label>
+        <rdfs:comment>A C++ abstract base class or pure-virtual interface.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#CodeElement">
+        <rdfs:label>Code Element</rdfs:label>
+        <rdfs:comment>Any named entity in source code: method, variable, constant, etc.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#SourceFile">
+        <rdfs:label>Source File</rdfs:label>
+        <rdfs:comment>A C++ header (.hpp) or implementation (.cpp) file in the package.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#Thread">
+        <rdfs:label>Thread</rdfs:label>
+        <rdfs:comment>An execution thread in the driver process.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#DataNode">
+        <rdfs:label>Data Node</rdfs:label>
+        <rdfs:comment>Any variable, register, or data container that carries runtime values.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#CommunicationProtocol">
+        <rdfs:label>Communication Protocol</rdfs:label>
+        <rdfs:comment>A serial or network protocol used to communicate with hardware.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#ROS2Interface">
+        <rdfs:label>ROS 2 Interface</rdfs:label>
+        <rdfs:comment>A ros2_control state or command interface visible to the Controller Manager.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#SynchronisationMechanism">
+        <rdfs:label>Synchronisation Mechanism</rdfs:label>
+        <rdfs:comment>A concurrency primitive used to safely share data between threads.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#Optimisation">
+        <rdfs:label>Optimisation</rdfs:label>
+        <rdfs:comment>A deliberate code-level performance improvement.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#ChangeSet">
+        <rdfs:label>Change Set</rdfs:label>
+        <rdfs:comment>A documented set of modifications introduced in a single revision.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#ConfigParameter">
+        <rdfs:label>Configuration Parameter</rdfs:label>
+        <rdfs:comment>A runtime configuration value loaded from URDF or launch parameters.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ── Hardware ─────────────────────────────────────────────── -->
+
+    <owl:Class rdf:about="#Robotiq2FGripper">
+        <rdfs:subClassOf rdf:resource="#HardwareDevice"/>
+        <rdfs:label>Robotiq 2F Gripper</rdfs:label>
+        <rdfs:comment>The Robotiq 2-Finger adaptive gripper communicating over Modbus RTU / RS-485.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ── Software Components ──────────────────────────────────── -->
+
+    <owl:Class rdf:about="#Driver">
+        <rdfs:subClassOf rdf:resource="#SoftwareComponent"/>
+        <rdfs:label>Driver</rdfs:label>
+        <rdfs:comment>Abstract base class defining the hardware communication contract (driver.hpp).</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#DefaultDriver">
+        <rdfs:subClassOf rdf:resource="#Driver"/>
+        <rdfs:label>Default Driver</rdfs:label>
+        <rdfs:comment>Concrete Modbus RTU implementation for communicating with physical hardware.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#FakeDriver">
+        <rdfs:subClassOf rdf:resource="#Driver"/>
+        <rdfs:label>Fake Driver</rdfs:label>
+        <rdfs:comment>Stub implementation for software-in-the-loop testing and CI without physical hardware.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#HardwareInterface">
+        <rdfs:subClassOf rdf:resource="#SoftwareComponent"/>
+        <rdfs:label>Hardware Interface</rdfs:label>
+        <rdfs:comment>ros2_control SystemInterface binding. Bridges the C++ driver and the ROS 2 Controller Manager. Owns the thread boundary between background I/O and the real-time control loop.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#ROS2ControllerManager">
+        <rdfs:subClassOf rdf:resource="#SoftwareComponent"/>
+        <rdfs:label>ROS 2 Controller Manager</rdfs:label>
+        <rdfs:comment>The ros2_control real-time layer that reads state interfaces and writes command interfaces on every control cycle.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ── Threads ───────────────────────────────────────────────── -->
+
+    <owl:Class rdf:about="#RealtimeThread">
+        <rdfs:subClassOf rdf:resource="#Thread"/>
+        <rdfs:label>Real-time Thread</rdfs:label>
+        <rdfs:comment>The ros2_control control loop thread. Runs read() and write() at a fixed rate. Must never block on I/O.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#BackgroundPollingThread">
+        <rdfs:subClassOf rdf:resource="#Thread"/>
+        <rdfs:label>Background Polling Thread</rdfs:label>
+        <rdfs:comment>Dedicated non-real-time thread that owns all Modbus serial I/O. Runs background_task(). Writes results into atomic variables for the real-time thread to consume.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ── Code Elements ─────────────────────────────────────────── -->
+
+    <owl:Class rdf:about="#Method">
+        <rdfs:subClassOf rdf:resource="#CodeElement"/>
+        <rdfs:label>Method</rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="#MemberVariable">
+        <rdfs:subClassOf rdf:resource="#CodeElement"/>
+        <rdfs:label>Member Variable</rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="#NamedConstant">
+        <rdfs:subClassOf rdf:resource="#CodeElement"/>
+        <rdfs:label>Named Constant</rdfs:label>
+    </owl:Class>
+
+    <!-- ── Data Nodes ─────────────────────────────────────────────── -->
+
+    <owl:Class rdf:about="#ModbusRegister">
+        <rdfs:subClassOf rdf:resource="#DataNode"/>
+        <rdfs:label>Modbus Register</rdfs:label>
+        <rdfs:comment>A specific byte within the 8-byte Modbus RTU status response frame.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#AtomicVariable">
+        <rdfs:subClassOf rdf:resource="#DataNode"/>
+        <rdfs:subClassOf rdf:resource="#MemberVariable"/>
+        <rdfs:label>Atomic Variable</rdfs:label>
+        <rdfs:comment>A std::atomic member variable used to safely pass raw register bytes from the background thread to the real-time thread without locks.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#ScaledVariable">
+        <rdfs:subClassOf rdf:resource="#DataNode"/>
+        <rdfs:subClassOf rdf:resource="#MemberVariable"/>
+        <rdfs:label>Scaled Variable</rdfs:label>
+        <rdfs:comment>A double member variable computed by applying a scaling formula to a raw atomic value. This is the value exposed to ROS 2 controllers.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#DriverCacheVariable">
+        <rdfs:subClassOf rdf:resource="#DataNode"/>
+        <rdfs:subClassOf rdf:resource="#MemberVariable"/>
+        <rdfs:label>Driver Cache Variable</rdfs:label>
+        <rdfs:comment>A uint8_t member variable in the driver layer that caches the last-parsed register value, decoupling getter call rate from polling rate.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ── Communication ─────────────────────────────────────────── -->
+
+    <owl:Class rdf:about="#ModbusRTU">
+        <rdfs:subClassOf rdf:resource="#CommunicationProtocol"/>
+        <rdfs:label>Modbus RTU</rdfs:label>
+        <rdfs:comment>Serial Modbus RTU protocol over RS-485. Used for both polling status registers and sending actuation commands to the gripper.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#ModbusTransaction">
+        <rdfs:label>Modbus Transaction</rdfs:label>
+        <rdfs:comment>A single Modbus request-response exchange on the serial bus.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#ModbusReadTransaction">
+        <rdfs:subClassOf rdf:resource="#ModbusTransaction"/>
+        <rdfs:label>Modbus Read Transaction</rdfs:label>
+        <rdfs:comment>A status poll that returns the 8-byte response frame from the gripper.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#ModbusWriteTransaction">
+        <rdfs:subClassOf rdf:resource="#ModbusTransaction"/>
+        <rdfs:label>Modbus Write Transaction</rdfs:label>
+        <rdfs:comment>A command write that sends speed, force, and/or position to the gripper actuator.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ── ROS 2 Interfaces ──────────────────────────────────────── -->
+
+    <owl:Class rdf:about="#StateInterface">
+        <rdfs:subClassOf rdf:resource="#ROS2Interface"/>
+        <rdfs:label>State Interface</rdfs:label>
+        <rdfs:comment>A read-only interface exposing hardware state to ros2_control controllers.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#CommandInterface">
+        <rdfs:subClassOf rdf:resource="#ROS2Interface"/>
+        <rdfs:label>Command Interface</rdfs:label>
+        <rdfs:comment>A write interface through which controllers command actuator targets.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ── Synchronisation ──────────────────────────────────────── -->
+
+    <owl:Class rdf:about="#StdAtomic">
+        <rdfs:subClassOf rdf:resource="#SynchronisationMechanism"/>
+        <rdfs:label>std::atomic</rdfs:label>
+        <rdfs:comment>C++ standard library atomic type. Provides lock-free, thread-safe reads and writes for simple scalar values. Used here to avoid priority inversion between the real-time and background threads.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ── Optimisations ─────────────────────────────────────────── -->
+
+    <owl:Class rdf:about="#DuplicateWriteSuppression">
+        <rdfs:subClassOf rdf:resource="#Optimisation"/>
+        <rdfs:label>Duplicate Write Suppression</rdfs:label>
+        <rdfs:comment>Optimisation in background_task(): Modbus write commands are only issued when at least one of the commanded values (speed, force, position) has changed since the previous cycle. Reduces serial bus traffic and frees bandwidth for status polling.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ── Domain-specific ──────────────────────────────────────── -->
+
+    <owl:Class rdf:about="#ObjectDetectionStatusValue">
+        <rdfs:label>Object Detection Status Value</rdfs:label>
+        <rdfs:comment>An enumerated firmware status code emitted by the gripper to describe the outcome of a grasp attempt.</rdfs:comment>
+    </owl:Class>
+
+    <owl:Class rdf:about="#SourceFile"/>
+
+    <owl:Class rdf:about="#HeaderFile">
+        <rdfs:subClassOf rdf:resource="#SourceFile"/>
+        <rdfs:label>Header File (.hpp)</rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="#ImplementationFile">
+        <rdfs:subClassOf rdf:resource="#SourceFile"/>
+        <rdfs:label>Implementation File (.cpp)</rdfs:label>
+    </owl:Class>
+
+
+    <!-- ============================================================ -->
+    <!-- INDIVIDUALS                                                   -->
+    <!-- ============================================================ -->
+
+    <!-- ── Hardware ─────────────────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Robotiq2FGripper_Instance">
+        <rdf:type rdf:resource="#Robotiq2FGripper"/>
+        <rdfs:label>Robotiq 2F Gripper (physical device)</rdfs:label>
+        <rdfs:comment>The physical end-effector. Communicates over RS-485 Modbus RTU. Reports status in an 8-byte response frame.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ── Threads ───────────────────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#ControlLoopThread">
+        <rdf:type rdf:resource="#RealtimeThread"/>
+        <rdfs:label>ros2_control real-time control loop thread</rdfs:label>
+        <rdfs:comment>Calls read() and write() on the HardwareInterface at a fixed control frequency. Must never block on serial I/O.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#BackgroundTaskThread">
+        <rdf:type rdf:resource="#BackgroundPollingThread"/>
+        <rdfs:label>background_task() polling thread</rdfs:label>
+        <rdfs:comment>Dedicated thread that owns all Modbus transactions. Reads status registers, applies duplicate-write suppression, and stores results in atomic variables.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ── Synchronisation ──────────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#StdAtomic_Instance">
+        <rdf:type rdf:resource="#StdAtomic"/>
+        <rdfs:label>std::atomic (lock-free synchronisation)</rdfs:label>
+        <rdfs:comment>Used for gripper_current_raw_ and object_detection_status_raw_. Eliminates the need for mutexes between the background and real-time threads, preventing priority inversion.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ── Optimisation ──────────────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#DuplicateWriteSuppression_Instance">
+        <rdf:type rdf:resource="#DuplicateWriteSuppression"/>
+        <rdfs:label>Duplicate Write Suppression optimisation</rdfs:label>
+        <rdfs:comment>Introduced in background_task(). Compares commanded speed, force, and position against the previously sent values. A Modbus write is skipped if nothing changed. Especially effective during steady-state grasp hold.</rdfs:comment>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Communication Protocol ────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#ModbusRTU_Instance">
+        <rdf:type rdf:resource="#ModbusRTU"/>
+        <rdfs:label>Modbus RTU over RS-485</rdfs:label>
+        <rdfs:comment>Serial Modbus RTU transport layer used by the Robotiq gripper. Read transactions return an 8-byte status frame. Write transactions deliver speed/force/position commands.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ── Modbus Registers ──────────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Byte0_GripperStatus">
+        <rdf:type rdf:resource="#ModbusRegister"/>
+        <rdfs:label>Byte 0 — Gripper Status A</rdfs:label>
+        <robotiq:has_byte_index rdf:datatype="xsd:integer">0</robotiq:has_byte_index>
+        <rdfs:comment>Primary gripper status register. Encodes activation state, action status, goto bit, and object detection status code (bits 6-7).</rdfs:comment>
+        <robotiq:cached_in rdf:resource="#Var_object_detection_status_driver"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Byte1_Reserved">
+        <rdf:type rdf:resource="#ModbusRegister"/>
+        <rdfs:label>Byte 1 — Reserved</rdfs:label>
+        <robotiq:has_byte_index rdf:datatype="xsd:integer">1</robotiq:has_byte_index>
+        <rdfs:comment>Reserved byte.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Byte2_FaultStatus">
+        <rdf:type rdf:resource="#ModbusRegister"/>
+        <rdfs:label>Byte 2 — Fault Status</rdfs:label>
+        <robotiq:has_byte_index rdf:datatype="xsd:integer">2</robotiq:has_byte_index>
+        <rdfs:comment>Contains the fault status code.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Byte3_PositionRequestEcho">
+        <rdf:type rdf:resource="#ModbusRegister"/>
+        <rdfs:label>Byte 3 — Position Request Echo</rdfs:label>
+        <robotiq:has_byte_index rdf:datatype="xsd:integer">3</robotiq:has_byte_index>
+        <rdfs:comment>Echo of the last commanded position target.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Byte4_ActualPosition">
+        <rdf:type rdf:resource="#ModbusRegister"/>
+        <rdfs:label>Byte 4 — Actual Position</rdfs:label>
+        <robotiq:has_byte_index rdf:datatype="xsd:integer">4</robotiq:has_byte_index>
+        <rdfs:comment>Current finger position feedback (0 = fully open, 255 = fully closed).</rdfs:comment>
+        <robotiq:cached_in rdf:resource="#Var_gripper_position_driver"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Byte5_Current">
+        <rdf:type rdf:resource="#ModbusRegister"/>
+        <rdfs:label>Byte 5 — Motor Current ★ (new)</rdfs:label>
+        <robotiq:has_byte_index rdf:datatype="xsd:integer">5</robotiq:has_byte_index>
+        <rdfs:comment>Motor current draw. Range 0-255 where 0 = no current and 255 = maximum rated current. Newly parsed in the Acrambly revision via kCurrentIndex = 5.</rdfs:comment>
+        <robotiq:cached_in rdf:resource="#Var_gripper_current_driver"/>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+    </owl:NamedIndividual>
+
+    <!-- ── Named Constants ───────────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Const_kCurrentIndex">
+        <rdf:type rdf:resource="#NamedConstant"/>
+        <rdfs:label>kCurrentIndex</rdfs:label>
+        <rdfs:comment>Named constant added in default_driver.cpp to index byte 5 of the Modbus frame. Prevents magic-number bugs if the frame layout changes.</rdfs:comment>
+        <robotiq:constant_value>5</robotiq:constant_value>
+        <robotiq:has_cpp_type>constexpr int</robotiq:has_cpp_type>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_default_driver_cpp"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Driver Cache Variables ────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Var_gripper_current_driver">
+        <rdf:type rdf:resource="#DriverCacheVariable"/>
+        <rdfs:label>gripper_current_ (DefaultDriver cache)</rdfs:label>
+        <rdfs:comment>uint8_t member of DefaultDriver. Caches the most recent byte-5 value parsed in update_status(). Returned by get_gripper_current().</rdfs:comment>
+        <robotiq:has_cpp_type>uint8_t</robotiq:has_cpp_type>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_default_driver_hpp"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Var_object_detection_status_driver">
+        <rdf:type rdf:resource="#DriverCacheVariable"/>
+        <rdfs:label>object_detection_status_ (DefaultDriver cache)</rdfs:label>
+        <rdfs:comment>ObjectDetectionStatus enum member of DefaultDriver. Caches parsed object detection status. Returned by get_object_detection_status().</rdfs:comment>
+        <robotiq:has_cpp_type>ObjectDetectionStatus</robotiq:has_cpp_type>
+        <robotiq:declared_in rdf:resource="#File_default_driver_hpp"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Var_gripper_position_driver">
+        <rdf:type rdf:resource="#DriverCacheVariable"/>
+        <rdfs:label>gripper_position_ (DefaultDriver cache)</rdfs:label>
+        <robotiq:has_cpp_type>uint8_t</robotiq:has_cpp_type>
+        <robotiq:declared_in rdf:resource="#File_default_driver_hpp"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Atomic Bridge Variables (HardwareInterface) ───────────── -->
+
+    <owl:NamedIndividual rdf:about="#Var_gripper_current_raw_">
+        <rdf:type rdf:resource="#AtomicVariable"/>
+        <rdfs:label>gripper_current_raw_ (atomic bridge)</rdfs:label>
+        <rdfs:comment>Written by BackgroundTaskThread after each Modbus poll. Read by the real-time ControlLoopThread in read() without locks. Acts as the thread-safe handoff point for the raw current byte.</rdfs:comment>
+        <robotiq:has_cpp_type>std::atomic&lt;uint8_t&gt;</robotiq:has_cpp_type>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_hardware_interface_hpp"/>
+        <robotiq:synchronises_via rdf:resource="#StdAtomic_Instance"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Var_object_detection_status_raw_">
+        <rdf:type rdf:resource="#AtomicVariable"/>
+        <rdfs:label>object_detection_status_raw_ (atomic bridge)</rdfs:label>
+        <rdfs:comment>Written by BackgroundTaskThread. Read by ControlLoopThread in read(). Carries the raw firmware detection code.</rdfs:comment>
+        <robotiq:has_cpp_type>std::atomic&lt;uint8_t&gt;</robotiq:has_cpp_type>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_hardware_interface_hpp"/>
+        <robotiq:synchronises_via rdf:resource="#StdAtomic_Instance"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Scaled / Derived Variables (HardwareInterface) ────────── -->
+
+    <owl:NamedIndividual rdf:about="#Var_gripper_current_scaled">
+        <rdf:type rdf:resource="#ScaledVariable"/>
+        <rdfs:label>gripper_current_ (scaled double, HardwareInterface)</rdfs:label>
+        <rdfs:comment>Computed in read() each control cycle. Maps the raw 0-255 uint8 to physical units using gripper_max_force_. Exposed via HW_IF_EFFORT.</rdfs:comment>
+        <robotiq:has_cpp_type>double</robotiq:has_cpp_type>
+        <robotiq:scaling_formula>gripper_current_ = (gripper_current_raw_ / 255.0) * gripper_max_force_</robotiq:scaling_formula>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_hardware_interface_hpp"/>
+        <robotiq:scaled_from rdf:resource="#Var_gripper_current_raw_"/>
+        <robotiq:has_scaling_parameter rdf:resource="#Param_gripper_max_force"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Var_object_detection_state_">
+        <rdf:type rdf:resource="#ScaledVariable"/>
+        <rdfs:label>object_detection_state_ (double, HardwareInterface)</rdfs:label>
+        <rdfs:comment>Stable double copy of object_detection_status_raw_, exposed via the object_detection_status state interface.</rdfs:comment>
+        <robotiq:has_cpp_type>double</robotiq:has_cpp_type>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_hardware_interface_hpp"/>
+        <robotiq:scaled_from rdf:resource="#Var_object_detection_status_raw_"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Var_gripper_velocity_">
+        <rdf:type rdf:resource="#ScaledVariable"/>
+        <rdfs:label>gripper_velocity_ (derived, HardwareInterface)</rdfs:label>
+        <rdfs:comment>Discrete-time velocity estimate computed as (gripper_position_ - last_gripper_position_) / dt in each read() cycle.</rdfs:comment>
+        <robotiq:has_cpp_type>double</robotiq:has_cpp_type>
+        <robotiq:scaling_formula>gripper_velocity_ = (gripper_position_ - last_gripper_position_) / dt</robotiq:scaling_formula>
+        <robotiq:declared_in rdf:resource="#File_hardware_interface_hpp"/>
+        <robotiq:derived_from rdf:resource="#Var_last_gripper_position_"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Var_last_gripper_position_">
+        <rdf:type rdf:resource="#MemberVariable"/>
+        <rdfs:label>last_gripper_position_ (HardwareInterface)</rdfs:label>
+        <rdfs:comment>Stores the gripper position at the end of the previous read() cycle. Required for the discrete velocity derivative. New in Acrambly revision.</rdfs:comment>
+        <robotiq:has_cpp_type>double</robotiq:has_cpp_type>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_hardware_interface_hpp"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Configuration Parameters ─────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Param_gripper_max_force">
+        <rdf:type rdf:resource="#ConfigParameter"/>
+        <rdfs:label>gripper_max_force_</rdfs:label>
+        <rdfs:comment>Maximum rated force of the gripper in Newtons. Loaded from the URDF or launch configuration. Used as the scaling upper bound for the raw current measurement.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ── Methods — Driver (Abstract) ──────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Method_get_gripper_current_abstract">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>get_gripper_current() [pure virtual, Driver]</rdfs:label>
+        <rdfs:comment>Pure virtual getter added to the abstract Driver base class. Forces every concrete implementation to supply a current reading.</rdfs:comment>
+        <robotiq:has_cpp_type>virtual uint8_t get_gripper_current() = 0</robotiq:has_cpp_type>
+        <robotiq:is_pure_virtual rdf:datatype="xsd:boolean">true</robotiq:is_pure_virtual>
+        <robotiq:returns_raw_value rdf:datatype="xsd:boolean">true</robotiq:returns_raw_value>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_driver_hpp"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Method_get_object_detection_status_abstract">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>get_object_detection_status() [pure virtual, Driver]</rdfs:label>
+        <rdfs:comment>Pure virtual getter added to the abstract Driver base class. Forces all implementations to report object detection state.</rdfs:comment>
+        <robotiq:has_cpp_type>virtual uint8_t get_object_detection_status() = 0</robotiq:has_cpp_type>
+        <robotiq:is_pure_virtual rdf:datatype="xsd:boolean">true</robotiq:is_pure_virtual>
+        <robotiq:returns_raw_value rdf:datatype="xsd:boolean">true</robotiq:returns_raw_value>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_driver_hpp"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Methods — DefaultDriver ──────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Method_update_status">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>update_status() [DefaultDriver]</rdfs:label>
+        <rdfs:comment>Called on every polling cycle. Parses the full 8-byte Modbus response frame. Now also reads byte 5 via kCurrentIndex to populate gripper_current_. Executes on BackgroundTaskThread.</rdfs:comment>
+        <robotiq:implemented_in rdf:resource="#File_default_driver_cpp"/>
+        <robotiq:executes_on rdf:resource="#BackgroundTaskThread"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Method_get_gripper_current_default">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>get_gripper_current() [DefaultDriver]</rdfs:label>
+        <rdfs:comment>Concrete override. Returns cached gripper_current_ uint8 without triggering a new Modbus transaction.</rdfs:comment>
+        <robotiq:returns_raw_value rdf:datatype="xsd:boolean">true</robotiq:returns_raw_value>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_default_driver_hpp"/>
+        <robotiq:implemented_in rdf:resource="#File_default_driver_cpp"/>
+        <robotiq:overrides rdf:resource="#Method_get_gripper_current_abstract"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Method_get_object_detection_status_default">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>get_object_detection_status() [DefaultDriver]</rdfs:label>
+        <rdfs:comment>Concrete override. Returns cached object_detection_status_ uint8.</rdfs:comment>
+        <robotiq:returns_raw_value rdf:datatype="xsd:boolean">true</robotiq:returns_raw_value>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_default_driver_hpp"/>
+        <robotiq:implemented_in rdf:resource="#File_default_driver_cpp"/>
+        <robotiq:overrides rdf:resource="#Method_get_object_detection_status_abstract"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Methods — FakeDriver ─────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Method_get_gripper_current_fake">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>get_gripper_current() [FakeDriver] — stub</rdfs:label>
+        <rdfs:comment>Stub implementation returning 0. Satisfies the pure-virtual contract so the fake driver compiles and can be used in simulation without a physical gripper.</rdfs:comment>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_fake_driver_hpp"/>
+        <robotiq:implemented_in rdf:resource="#File_fake_driver_cpp"/>
+        <robotiq:overrides rdf:resource="#Method_get_gripper_current_abstract"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Method_get_object_detection_status_fake">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>get_object_detection_status() [FakeDriver] — stub</rdfs:label>
+        <rdfs:comment>Stub returning 0. Represents "still moving / no contact" in simulation — intentionally neutral to avoid spurious grasp-detected events.</rdfs:comment>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:declared_in rdf:resource="#File_fake_driver_hpp"/>
+        <robotiq:implemented_in rdf:resource="#File_fake_driver_cpp"/>
+        <robotiq:overrides rdf:resource="#Method_get_object_detection_status_abstract"/>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Methods — HardwareInterface ──────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Method_on_init">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>on_init() [HardwareInterface]</rdfs:label>
+        <rdfs:comment>Lifecycle method called at startup. Signature updated to accept const hardware_interface::HardwareInfo&amp; (Humble/Iron API). Validation extended to accept joints with 2, 3, or 4 state interfaces to support partial URDF adoption.</rdfs:comment>
+        <robotiq:accepted_interface_counts>2,3,4</robotiq:accepted_interface_counts>
+        <robotiq:implemented_in rdf:resource="#File_hardware_interface_cpp"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Method_export_state_interfaces">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>export_state_interfaces() [HardwareInterface]</rdfs:label>
+        <rdfs:comment>Registers all state interfaces with the Controller Manager. Extended to include HW_IF_EFFORT → gripper_current_ and object_detection_status → object_detection_state_.</rdfs:comment>
+        <robotiq:implemented_in rdf:resource="#File_hardware_interface_cpp"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Method_read">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>read() [HardwareInterface]</rdfs:label>
+        <rdfs:comment>Real-time method called every control cycle. Reads atomic variables written by the background thread, applies scaling formula to produce gripper_current_, updates object_detection_state_, and computes discrete velocity derivative.</rdfs:comment>
+        <robotiq:implemented_in rdf:resource="#File_hardware_interface_cpp"/>
+        <robotiq:executes_on rdf:resource="#ControlLoopThread"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Method_background_task">
+        <rdf:type rdf:resource="#Method"/>
+        <rdfs:label>background_task() [HardwareInterface]</rdfs:label>
+        <rdfs:comment>Non-real-time loop on BackgroundTaskThread. Calls update_status() on the driver, applies duplicate-write suppression before issuing Modbus writes, and stores fresh register values into atomic bridge variables.</rdfs:comment>
+        <robotiq:implemented_in rdf:resource="#File_hardware_interface_cpp"/>
+        <robotiq:executes_on rdf:resource="#BackgroundTaskThread"/>
+    </owl:NamedIndividual>
+
+    <!-- ── ROS 2 State Interfaces ─────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#SI_position">
+        <rdf:type rdf:resource="#StateInterface"/>
+        <rdfs:label>State Interface: position</rdfs:label>
+        <robotiq:interface_name>position</robotiq:interface_name>
+        <robotiq:mapped_to_variable rdf:resource="#Var_gripper_position_driver"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#SI_velocity">
+        <rdf:type rdf:resource="#StateInterface"/>
+        <rdfs:label>State Interface: velocity</rdfs:label>
+        <robotiq:interface_name>velocity</robotiq:interface_name>
+        <robotiq:mapped_to_variable rdf:resource="#Var_gripper_velocity_"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#SI_effort">
+        <rdf:type rdf:resource="#StateInterface"/>
+        <rdfs:label>State Interface: effort (HW_IF_EFFORT) ★ new</rdfs:label>
+        <robotiq:interface_name>effort</robotiq:interface_name>
+        <robotiq:mapped_to_variable rdf:resource="#Var_gripper_current_scaled"/>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#SI_object_detection_status">
+        <rdf:type rdf:resource="#StateInterface"/>
+        <rdfs:label>State Interface: object_detection_status ★ new</rdfs:label>
+        <robotiq:interface_name>object_detection_status</robotiq:interface_name>
+        <robotiq:mapped_to_variable rdf:resource="#Var_object_detection_state_"/>
+        <robotiq:is_new_in_revision rdf:datatype="xsd:boolean">true</robotiq:is_new_in_revision>
+        <robotiq:introduced_in_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <!-- ── ROS 2 Command Interfaces ──────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#CI_position">
+        <rdf:type rdf:resource="#CommandInterface"/>
+        <rdfs:label>Command Interface: position</rdfs:label>
+        <robotiq:interface_name>position</robotiq:interface_name>
+        <rdfs:comment>Target finger position commanded by a ROS 2 controller. Write suppression in background_task() means this only triggers a Modbus write when the value actually changes.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#CI_speed">
+        <rdf:type rdf:resource="#CommandInterface"/>
+        <rdfs:label>Command Interface: set_gripper_max_velocity</rdfs:label>
+        <robotiq:interface_name>set_gripper_max_velocity</robotiq:interface_name>
+        <rdfs:comment>Target closing speed. Subject to duplicate-write suppression.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#CI_force">
+        <rdf:type rdf:resource="#CommandInterface"/>
+        <rdfs:label>Command Interface: set_gripper_max_effort</rdfs:label>
+        <robotiq:interface_name>set_gripper_max_effort</robotiq:interface_name>
+        <rdfs:comment>Target closing force. Subject to duplicate-write suppression.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ── Object Detection Status Values ───────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#DetectionStatus_Moving">
+        <rdf:type rdf:resource="#ObjectDetectionStatusValue"/>
+        <rdfs:label>Object Detection: Fingers Moving (0)</rdfs:label>
+        <robotiq:detection_code rdf:datatype="xsd:integer">0</robotiq:detection_code>
+        <rdfs:comment>Gripper fingers are in motion; no contact has been detected yet.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#DetectionStatus_OuterObject">
+        <rdf:type rdf:resource="#ObjectDetectionStatusValue"/>
+        <rdfs:label>Object Detection: Outer Object Detected (1)</rdfs:label>
+        <robotiq:detection_code rdf:datatype="xsd:integer">1</robotiq:detection_code>
+        <rdfs:comment>Object detected while opening (finger stopped by outer contact).</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#DetectionStatus_InnerObject">
+        <rdf:type rdf:resource="#ObjectDetectionStatusValue"/>
+        <rdfs:label>Object Detection: Inner Object Detected (2)</rdfs:label>
+        <robotiq:detection_code rdf:datatype="xsd:integer">2</robotiq:detection_code>
+        <rdfs:comment>Object detected while closing (finger stopped by inner contact). Typical successful grasp.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#DetectionStatus_NoObject">
+        <rdf:type rdf:resource="#ObjectDetectionStatusValue"/>
+        <rdfs:label>Object Detection: No Object / Stall (3)</rdfs:label>
+        <robotiq:detection_code rdf:datatype="xsd:integer">3</robotiq:detection_code>
+        <rdfs:comment>Motion completed but no object was detected; gripper may have fully closed or stalled.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ── Source Files ───────────────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#File_driver_hpp">
+        <rdf:type rdf:resource="#HeaderFile"/>
+        <rdfs:label>include/robotiq_driver/driver.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/driver.hpp</robotiq:file_path>
+        <robotiq:file_role>Abstract base class defining the hardware communication interface contract.</robotiq:file_role>
+        <robotiq:modified_by_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_default_driver_hpp">
+        <rdf:type rdf:resource="#HeaderFile"/>
+        <rdfs:label>include/robotiq_driver/default_driver.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/default_driver.hpp</robotiq:file_path>
+        <robotiq:file_role>Header for the concrete Modbus RTU driver implementation for physical hardware.</robotiq:file_role>
+        <robotiq:modified_by_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_fake_driver_hpp">
+        <rdf:type rdf:resource="#HeaderFile"/>
+        <rdfs:label>include/robotiq_driver/fake/fake_driver.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/fake/fake_driver.hpp</robotiq:file_path>
+        <robotiq:file_role>Header for the simulation/mock driver used in software-in-the-loop testing and CI.</robotiq:file_role>
+        <robotiq:modified_by_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_hardware_interface_hpp">
+        <rdf:type rdf:resource="#HeaderFile"/>
+        <rdfs:label>include/robotiq_driver/hardware_interface.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/hardware_interface.hpp</robotiq:file_path>
+        <robotiq:file_role>ros2_control SystemInterface binding declaration. Thread boundary variables, API modernisation.</robotiq:file_role>
+        <robotiq:modified_by_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_default_driver_cpp">
+        <rdf:type rdf:resource="#ImplementationFile"/>
+        <rdfs:label>src/default_driver.cpp</rdfs:label>
+        <robotiq:file_path>src/default_driver.cpp</robotiq:file_path>
+        <robotiq:file_role>Core Modbus serial communication logic. Parses register bytes. Now also parses byte 5 for current.</robotiq:file_role>
+        <robotiq:modified_by_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_fake_driver_cpp">
+        <rdf:type rdf:resource="#ImplementationFile"/>
+        <rdfs:label>src/fake/fake_driver.cpp</rdfs:label>
+        <robotiq:file_path>src/fake/fake_driver.cpp</robotiq:file_path>
+        <robotiq:file_role>Stub implementations for both new getters, returning 0 for safe simulation behaviour.</robotiq:file_role>
+        <robotiq:modified_by_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_hardware_interface_cpp">
+        <rdf:type rdf:resource="#ImplementationFile"/>
+        <rdfs:label>src/hardware_interface.cpp</rdfs:label>
+        <robotiq:file_path>src/hardware_interface.cpp</robotiq:file_path>
+        <robotiq:file_role>Central integration file. Exports interfaces, scales effort, computes velocity, manages atomic stores, applies write suppression.</robotiq:file_role>
+        <robotiq:modified_by_change rdf:resource="#ChangeSet_Acrambly_ExtendedFeedback"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Change Set ─────────────────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#ChangeSet_Acrambly_ExtendedFeedback">
+        <rdf:type rdf:resource="#ChangeSet"/>
+        <rdfs:label>Acrambly Extended State Feedback Revision</rdfs:label>
+        <rdfs:comment>
+            Adds effort (gripper current) and object_detection_status state interfaces to the 
+            ros2_control integration. Introduces atomic thread-safe bridge variables, scales raw
+            register bytes to physical units, updates the on_init() API for Humble/Iron compatibility,
+            and optimises Modbus traffic via duplicate write suppression.
+            Affects 7 files: driver.hpp, default_driver.hpp, fake_driver.hpp,
+            hardware_interface.hpp, default_driver.cpp, fake_driver.cpp, hardware_interface.cpp.
+        </rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ── Software Component Instances (with relations) ─────────── -->
+
+    <owl:NamedIndividual rdf:about="#DefaultDriver_Instance">
+        <rdf:type rdf:resource="#DefaultDriver"/>
+        <rdfs:label>DefaultDriver (physical hardware backend)</rdfs:label>
+        <robotiq:component_runs_on rdf:resource="#BackgroundTaskThread"/>
+        <robotiq:polls_via rdf:resource="#ModbusRTU_Instance"/>
+        <robotiq:commands_via rdf:resource="#ModbusRTU_Instance"/>
+        <robotiq:reads_from rdf:resource="#Byte0_GripperStatus"/>
+        <robotiq:reads_from rdf:resource="#Byte4_ActualPosition"/>
+        <robotiq:reads_from rdf:resource="#Byte5_Current"/>
+        <robotiq:writes_to rdf:resource="#Var_gripper_current_driver"/>
+        <robotiq:writes_to rdf:resource="#Var_object_detection_status_driver"/>
+        <robotiq:has_method rdf:resource="#Method_update_status"/>
+        <robotiq:has_method rdf:resource="#Method_get_gripper_current_default"/>
+        <robotiq:has_method rdf:resource="#Method_get_object_detection_status_default"/>
+        <robotiq:has_member_variable rdf:resource="#Var_gripper_current_driver"/>
+        <robotiq:has_member_variable rdf:resource="#Var_object_detection_status_driver"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#FakeDriver_Instance">
+        <rdf:type rdf:resource="#FakeDriver"/>
+        <rdfs:label>FakeDriver (simulation/mock backend)</rdfs:label>
+        <robotiq:has_method rdf:resource="#Method_get_gripper_current_fake"/>
+        <robotiq:has_method rdf:resource="#Method_get_object_detection_status_fake"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#HardwareInterface_Instance">
+        <rdf:type rdf:resource="#HardwareInterface"/>
+        <rdfs:label>RobotiqGripperHardwareInterface</rdfs:label>
+        <robotiq:exports_interface rdf:resource="#SI_position"/>
+        <robotiq:exports_interface rdf:resource="#SI_velocity"/>
+        <robotiq:exports_interface rdf:resource="#SI_effort"/>
+        <robotiq:exports_interface rdf:resource="#SI_object_detection_status"/>
+        <robotiq:exports_interface rdf:resource="#CI_position"/>
+        <robotiq:exports_interface rdf:resource="#CI_speed"/>
+        <robotiq:exports_interface rdf:resource="#CI_force"/>
+        <robotiq:reads_from rdf:resource="#Var_gripper_current_raw_"/>
+        <robotiq:reads_from rdf:resource="#Var_object_detection_status_raw_"/>
+        <robotiq:writes_to rdf:resource="#Var_gripper_current_raw_"/>
+        <robotiq:writes_to rdf:resource="#Var_object_detection_status_raw_"/>
+        <robotiq:has_method rdf:resource="#Method_on_init"/>
+        <robotiq:has_method rdf:resource="#Method_export_state_interfaces"/>
+        <robotiq:has_method rdf:resource="#Method_read"/>
+        <robotiq:has_method rdf:resource="#Method_background_task"/>
+        <robotiq:has_member_variable rdf:resource="#Var_gripper_current_raw_"/>
+        <robotiq:has_member_variable rdf:resource="#Var_object_detection_status_raw_"/>
+        <robotiq:has_member_variable rdf:resource="#Var_gripper_current_scaled"/>
+        <robotiq:has_member_variable rdf:resource="#Var_object_detection_state_"/>
+        <robotiq:has_member_variable rdf:resource="#Var_last_gripper_position_"/>
+        <robotiq:has_member_variable rdf:resource="#Var_gripper_velocity_"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#ControllerManager_Instance">
+        <rdf:type rdf:resource="#ROS2ControllerManager"/>
+        <rdfs:label>ROS 2 Controller Manager</rdfs:label>
+        <robotiq:consumes rdf:resource="#SI_position"/>
+        <robotiq:consumes rdf:resource="#SI_velocity"/>
+        <robotiq:consumes rdf:resource="#SI_effort"/>
+        <robotiq:consumes rdf:resource="#SI_object_detection_status"/>
+        <robotiq:component_runs_on rdf:resource="#ControlLoopThread"/>
+    </owl:NamedIndividual>
+
+    <!-- ── High-Level ROS 2 Packages (Meta-package structure) ──────── -->
+    
+    <owl:Class rdf:about="#RosPackage">
+        <rdfs:subClassOf rdf:resource="#RobotiqConcept"/>
+        <rdfs:label>ROS 2 Package</rdfs:label>
+        <rdfs:comment>A top-level ROS 2 package within the robotiq workspace.</rdfs:comment>
+    </owl:Class>
+
+    <owl:NamedIndividual rdf:about="#Package_robotiq_driver">
+        <rdf:type rdf:resource="#RosPackage"/>
+        <rdfs:label>robotiq_driver (Package)</rdfs:label>
+        <rdfs:comment>The core hardware driver package handling serial communication and ros2_control abstractions.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Package_robotiq_description">
+        <rdf:type rdf:resource="#RosPackage"/>
+        <rdfs:label>robotiq_description (Package)</rdfs:label>
+        <rdfs:comment>Contains URDFs, meshes, and xacro files for visualizing the gripper in RViz/Gazebo.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Package_robotiq_controllers">
+        <rdf:type rdf:resource="#RosPackage"/>
+        <rdfs:label>robotiq_controllers (Package)</rdfs:label>
+        <rdfs:comment>Custom ros2_control controllers specific to the Robotiq gripper operation.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Package_robotiq_hardware_tests">
+        <rdf:type rdf:resource="#RosPackage"/>
+        <rdfs:label>robotiq_hardware_tests (Package)</rdfs:label>
+        <rdfs:comment>Hardware loopback and unit tests. Excluded from deep modeling.</rdfs:comment>
+    </owl:NamedIndividual>
+
+    <!-- ── Serial Communication Layer ──────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Class_Serial">
+        <rdf:type rdf:resource="#Class"/>
+        <rdfs:label>Serial (Abstract Base Class)</rdfs:label>
+        <robotiq:declared_in rdf:resource="#File_serial_hpp"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Class_DefaultSerial">
+        <rdf:type rdf:resource="#Class"/>
+        <rdfs:label>DefaultSerial</rdfs:label>
+        <rdfs:comment>Concrete POSIX serial port implementation.</rdfs:comment>
+        <robotiq:declared_in rdf:resource="#File_default_serial_hpp"/>
+        <robotiq:implemented_in rdf:resource="#File_default_serial_cpp"/>
+        <robotiq:overrides rdf:resource="#Class_Serial"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Dependency Injection / Factories ────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Class_DriverFactory">
+        <rdf:type rdf:resource="#Class"/>
+        <rdfs:label>DriverFactory</rdfs:label>
+        <robotiq:declared_in rdf:resource="#File_driver_factory_hpp"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Class_DefaultDriverFactory">
+        <rdf:type rdf:resource="#Class"/>
+        <rdfs:label>DefaultDriverFactory</rdfs:label>
+        <robotiq:declared_in rdf:resource="#File_default_driver_factory_hpp"/>
+        <robotiq:implemented_in rdf:resource="#File_default_driver_factory_cpp"/>
+        <robotiq:overrides rdf:resource="#Class_DriverFactory"/>
+        <robotiq:instantiates rdf:resource="#Class_DefaultDriver"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Class_SerialFactory">
+        <rdf:type rdf:resource="#Class"/>
+        <rdfs:label>SerialFactory</rdfs:label>
+        <robotiq:declared_in rdf:resource="#File_serial_factory_hpp"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Class_DefaultSerialFactory">
+        <rdf:type rdf:resource="#Class"/>
+        <rdfs:label>DefaultSerialFactory</rdfs:label>
+        <robotiq:declared_in rdf:resource="#File_default_serial_factory_hpp"/>
+        <robotiq:implemented_in rdf:resource="#File_default_serial_factory_cpp"/>
+        <robotiq:overrides rdf:resource="#Class_SerialFactory"/>
+        <robotiq:instantiates rdf:resource="#Class_DefaultSerial"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Utility / Helper Layer ──────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#Namespace_crc_utils">
+        <rdf:type rdf:resource="#Class"/>
+        <rdfs:label>crc_utils (Namespace/Helpers)</rdfs:label>
+        <rdfs:comment>Functions for computing Modbus RTU CRC-16 checksums.</rdfs:comment>
+        <robotiq:declared_in rdf:resource="#File_crc_utils_hpp"/>
+        <robotiq:implemented_in rdf:resource="#File_crc_utils_cpp"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Namespace_data_utils">
+        <rdf:type rdf:resource="#Class"/>
+        <rdfs:label>data_utils (Namespace/Helpers)</rdfs:label>
+        <rdfs:comment>Functions for byte swapping and payload formatting.</rdfs:comment>
+        <robotiq:declared_in rdf:resource="#File_data_utils_hpp"/>
+        <robotiq:implemented_in rdf:resource="#File_data_utils_cpp"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#Class_DriverException">
+        <rdf:type rdf:resource="#Class"/>
+        <rdfs:label>DriverException</rdfs:label>
+        <rdfs:comment>Custom runtime exceptions for serial errors.</rdfs:comment>
+        <robotiq:declared_in rdf:resource="#File_driver_exception_hpp"/>
+    </owl:NamedIndividual>
+
+    <!-- ── Missing Source Files ────────────────────────────────────── -->
+
+    <owl:NamedIndividual rdf:about="#File_serial_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/serial.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/serial.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_default_serial_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/default_serial.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/default_serial.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_default_serial_cpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>src/default_serial.cpp</rdfs:label>
+        <robotiq:file_path>src/default_serial.cpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_driver_factory_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/driver_factory.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/driver_factory.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_default_driver_factory_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/default_driver_factory.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/default_driver_factory.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_default_driver_factory_cpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>src/default_driver_factory.cpp</rdfs:label>
+        <robotiq:file_path>src/default_driver_factory.cpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_serial_factory_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/serial_factory.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/serial_factory.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_default_serial_factory_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/default_serial_factory.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/default_serial_factory.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_default_serial_factory_cpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>src/default_serial_factory.cpp</rdfs:label>
+        <robotiq:file_path>src/default_serial_factory.cpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_crc_utils_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/crc_utils.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/crc_utils.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_crc_utils_cpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>src/crc_utils.cpp</rdfs:label>
+        <robotiq:file_path>src/crc_utils.cpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_data_utils_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/data_utils.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/data_utils.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_data_utils_cpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>src/data_utils.cpp</rdfs:label>
+        <robotiq:file_path>src/data_utils.cpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_visibility_control_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/visibility_control.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/visibility_control.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="#File_driver_exception_hpp">
+        <rdf:type rdf:resource="#SourceFile"/>
+        <rdfs:label>include/robotiq_driver/driver_exception.hpp</rdfs:label>
+        <robotiq:file_path>include/robotiq_driver/driver_exception.hpp</robotiq:file_path>
+    </owl:NamedIndividual>
+
+</rdf:RDF>
