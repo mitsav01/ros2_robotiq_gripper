@@ -83,17 +83,17 @@ def generate_launch_description():
 
         nodes.extend([
             Node(package="controller_manager", executable="ros2_control_node", 
-                 namespace=side, parameters=[{"robot_description": desc_dual}, ctrl_yaml], 
+                 namespace=f"{side}_gripper", parameters=[{"robot_description": desc_dual}, ctrl_yaml], 
                  condition=IfCondition(is_dual)),
                  
             Node(package="robot_state_publisher", executable="robot_state_publisher", 
-                 namespace=side, parameters=[{"robot_description": desc_dual}], 
+                 namespace=f"{side}_gripper", parameters=[{"robot_description": desc_dual}], 
                  condition=IfCondition(is_dual))
         ])
 
         for ctrl in ["joint_state_broadcaster", "robotiq_activation_controller", "robotiq_gripper_controller"]:
             nodes.append(Node(package="controller_manager", executable="spawner",
-                              arguments=[ctrl, "-c", f"/{side}/controller_manager"], 
+                              arguments=[ctrl, "-c", f"/{side}_gripper/controller_manager"], 
                               condition=IfCondition(is_dual)))
 
     return LaunchDescription(args + nodes)
