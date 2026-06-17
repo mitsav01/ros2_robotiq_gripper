@@ -1,0 +1,83 @@
+# SINGLE GRIPPER CONTROLLERS
+
+controller_manager:
+  ros__parameters:
+    update_rate: 500  # Hz
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    robotiq_gripper_controller:
+      type: parallel_gripper_action_controller/GripperActionController
+    robotiq_activation_controller:
+      type: robotiq_controllers/RobotiqActivationController
+
+robotiq_gripper_controller:
+  ros__parameters:
+    joint: finger_joint
+    max_effort_interface: "finger_joint/effort"
+    max_effort: 50.0
+    max_velocity_interface: "finger_joint/velocity"
+    max_velocity: 0.5
+    state_interfaces: ["position", "velocity"]
+    allow_stalling: true
+    stall_timeout: 0.05
+    goal_tolerance: 0.02
+
+robotiq_activation_controller:
+  ros__parameters:
+    default: true
+
+# LEFT GRIPPER CONTROLLERS (Namespace: /left)
+
+left/controller_manager:
+  ros__parameters:
+    update_rate: 500  # Hz
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    robotiq_gripper_controller:
+      type: parallel_gripper_action_controller/GripperActionController
+    robotiq_activation_controller:
+      type: robotiq_controllers/RobotiqActivationController
+
+left/robotiq_gripper_controller:
+  ros__parameters:
+    joint: left_finger_joint
+    max_effort_interface: "left_finger_joint/effort"
+    max_effort: 50.0
+    max_velocity_interface: "left_finger_joint/velocity"
+    max_velocity: 0.5
+    state_interfaces: ["position", "velocity"]
+    allow_stalling: true
+    stall_timeout: 0.05
+    goal_tolerance: 0.02
+
+left/robotiq_activation_controller:
+  ros__parameters:
+    default: true
+
+# RIGHT GRIPPER CONTROLLERS (Namespace: /right)
+
+right/controller_manager:
+  ros__parameters:
+    update_rate: 500  # Hz
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    robotiq_gripper_controller:
+      type: parallel_gripper_action_controller/GripperActionController
+    robotiq_activation_controller:
+      type: robotiq_controllers/RobotiqActivationController
+
+right/robotiq_gripper_controller:
+  ros__parameters:
+    joint: right_finger_joint
+    max_effort_interface: "right_finger_joint/effort"
+    max_effort: 50.0
+    max_velocity_interface: "right_finger_joint/velocity"
+    max_velocity: 0.5
+    state_interfaces: ["position", "velocity"]
+    allow_stalling: true
+    stall_timeout: 0.05
+    goal_tolerance: 0.02
+
+right/robotiq_activation_controller:
+  ros__parameters:
+    default: true
