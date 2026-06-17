@@ -13,6 +13,7 @@ controller_manager:
 robotiq_gripper_controller:
   ros__parameters:
     joint: finger_joint
+    command_interface: position
     max_effort_interface: "finger_joint/effort"
     max_effort: 50.0
     max_velocity_interface: "finger_joint/velocity"
@@ -41,6 +42,7 @@ left/controller_manager:
 left/robotiq_gripper_controller:
   ros__parameters:
     joint: left_finger_joint
+    command_interface: position
     max_effort_interface: "left_finger_joint/effort"
     max_effort: 50.0
     max_velocity_interface: "left_finger_joint/velocity"
@@ -69,6 +71,7 @@ right/controller_manager:
 right/robotiq_gripper_controller:
   ros__parameters:
     joint: right_finger_joint
+    command_interface: position
     max_effort_interface: "right_finger_joint/effort"
     max_effort: 50.0
     max_velocity_interface: "right_finger_joint/velocity"
