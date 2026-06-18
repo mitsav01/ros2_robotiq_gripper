@@ -22,22 +22,21 @@ def generate_launch_description():
     gripper_type = LaunchConfiguration("gripper_type")
     model = LaunchConfiguration("model")
     use_fake_hardware = LaunchConfiguration("use_fake_hardware")
-    
-    ctrl_yaml = [
-        FindPackageShare("robotiq_description"), 
-        "/config/robotiq_controllers_", gripper_type, ".yaml"
-    ]
+    controller_config = LaunchConfiguration("controller_config")
 
     args = [
         DeclareLaunchArgument("gripper_type", default_value="140", choices=["85", "140"], 
                               description="Type of gripper: '85' or '140'"),
         DeclareLaunchArgument("is_dual", default_value="false", 
                               description="Set to 'true' to launch dual grippers"),
-        
         DeclareLaunchArgument("model", default_value=[
             FindPackageShare("robotiq_description"), 
             "/urdf/robotiq_2f_", gripper_type, "_gripper.urdf.xacro"
         ]),
+        DeclareLaunchArgument("controller_config", default_value=[
+            FindPackageShare("robotiq_description"), 
+            "/config/robotiq_controllers_", gripper_type, ".yaml"
+        ], description="Path to the controller configuration YAML file"),
         
         DeclareLaunchArgument("com_port", default_value=dev_1),
         DeclareLaunchArgument("use_fake_hardware", default_value="false"),
@@ -58,7 +57,7 @@ def generate_launch_description():
 
     nodes.extend([
         Node(package="controller_manager", executable="ros2_control_node", 
-             parameters=[{"robot_description": robot_desc_single}, ctrl_yaml], 
+             parameters=[{"robot_description": robot_desc_single}, controller_config], 
              output="screen", condition=UnlessCondition(is_dual)),
              
         Node(package="robot_state_publisher", executable="robot_state_publisher", 
@@ -83,7 +82,7 @@ def generate_launch_description():
 
         nodes.extend([
             Node(package="controller_manager", executable="ros2_control_node", 
-                 namespace=f"{side}_gripper", parameters=[{"robot_description": desc_dual}, ctrl_yaml], 
+                 namespace=f"{side}_gripper", parameters=[{"robot_description": desc_dual}, controller_config], 
                  condition=IfCondition(is_dual)),
                  
             Node(package="robot_state_publisher", executable="robot_state_publisher", 
