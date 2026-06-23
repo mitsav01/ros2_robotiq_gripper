@@ -14,9 +14,9 @@ robotiq_gripper_controller:
   ros__parameters:
     joint: robotiq_85_left_knuckle_joint
     command_interface: position
-    max_effort_interface: "robotiq_85_left_knuckle_joint/effort"
+    max_effort_interface: "robotiq_85_left_knuckle_joint/set_gripper_max_effort"
     max_effort: 50.0
-    max_velocity_interface: "robotiq_85_left_knuckle_joint/velocity"
+    max_velocity_interface: "robotiq_85_left_knuckle_joint/set_gripper_max_velocity"
     max_velocity: 0.5
     state_interfaces: ["position", "velocity"]
     allow_stalling: true
