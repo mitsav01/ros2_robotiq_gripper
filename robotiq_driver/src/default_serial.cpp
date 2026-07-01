@@ -55,12 +55,27 @@ void DefaultSerial::close()
 std::vector<uint8_t> DefaultSerial::read(size_t size)
 {
   std::vector<uint8_t> data;
-  size_t bytes_read = serial_->read(data, size);
-  if (bytes_read != size)
+  data.reserve(size);
+  size_t total_read = 0;
+
+  // Read in a loop until we have the requested number of bytes or no more data
+  while (total_read < size)
   {
-    const auto error_msg = "Requested " + std::to_string(size) + " bytes, but got " + std::to_string(bytes_read);
-    THROW(serial::IOException, error_msg.c_str());
+    std::vector<uint8_t> buffer;
+    size_t to_read = size - total_read;
+    size_t n = serial_->read(buffer, to_read);
+
+    // If no bytes were read (timeout or no data), stop and return what we have
+    if (n == 0)
+    {
+      break;
+    }
+
+    data.insert(data.end(), buffer.begin(), buffer.end());
+    total_read += n;
   }
+
+  // Return whatever was received. Caller should handle partial reads if necessary.
   return data;
 }
 
